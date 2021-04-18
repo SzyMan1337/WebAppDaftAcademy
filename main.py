@@ -6,6 +6,15 @@ import hashlib
 
 app = FastAPI()
 app.i = 0
+app.dicc = {}
+
+class HelloResp(BaseModel):
+    id:int
+    name:str
+    surname:str
+    register_date:str
+    vaccination_date:str
+
 
 @app.get("/")
 def root():
@@ -47,5 +56,17 @@ def registerPost(name:str = None, surname:str = None):
         day2 = today - timedelta(days=dlugos)
         p= today.strftime("%Y-%m-%d")
         d=day2.strftime("%Y-%m-%d")
-        return {"id": 1, "name": f"{name}", "register_date": f"{p}", "vaccination_date": f"{d}"}
-
+        x = HelloResp(id=1, name=f"{name}", surname=f"{surname}", register_date= f"{p}", vaccination_date= f"{d}")
+        app.dicc[app.i] = x
+        return x
+       
+@app.get("/register/{id}", status_code = 200)
+def getPost(id:int, respose:Response=Response()):
+    if id <1:
+        respose.status_code = 400
+    elif app.dicc.has_key(id):
+        return app.dicc[id]
+    else:
+        response.status_code = 404
+    
+    
