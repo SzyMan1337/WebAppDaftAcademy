@@ -62,10 +62,6 @@ def registerPost(item:Item = None):
             dlugos = len(item.name)
         if(item.surname != None):
             dlugos = dlugos + +len(item.surname)
-        
-        some = item.name + item.surname
-        stt = set(some)
-        dlugos = len(stt)
         today = datetime.now()
         day2 = today + timedelta(days=dlugos)
         p = today.strftime("%Y-%m-%d")
