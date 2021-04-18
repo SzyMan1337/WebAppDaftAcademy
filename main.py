@@ -37,11 +37,11 @@ def authMet(password:str, password_hash:str, respose:Response):
         respose.status_code = status.HTTP_404_UNAUTHORIZED
 
 
-# @app.post("/register/{name}/{surname}", status_code=201)
-# def registerPost(name:str, surname:str):
-#     app.i = app.i +1
-#     dlugos = len(name)+len(surname)
-#     today = date.today
-#     day2 = today - timedelta(days=dlugos); 
-#     return {"id": 1, "name": f"{name}", "register_date": f"{today.strftime("%Y-%m-%d")}", "vaccination_date": f"{day2.strftime("%Y-%m-%d")}"}
+@app.post("/register/{name}/{surname}", status_code=201)
+def registerPost(name:str, surname:str):
+    app.i = app.i +1
+    dlugos = len(name)+len(surname)
+    today = date.today
+    day2 = today - timedelta(days=dlugos); 
+    return {"id": 1, "name": f"{name}", "register_date": f"{today.strftime("%Y-%m-%d")}", "vaccination_date": f"{day2.strftime("%Y-%m-%d")}"}
 
