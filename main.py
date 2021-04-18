@@ -39,10 +39,10 @@ async def authMet(password:str, password_hash:str, respose:Response):
 
 @app.post("/register", status_code=201)
 async def registerPost(name:str, surname:str):
-    app.i = app.i +1
+    app.i = app.i + 1
     dlugos = len(name)+len(surname)
     today = datetime.now()
-    day2 = today - timedelta(days=dlugos); 
+    day2 = today - timedelta(days=dlugos)
     p= today.strftime("%Y-%m-%d")
     d=day2.strftime("%Y-%m-%d")
     return {"id": 1, "name": f"{name}", "register_date": f"{p}", "vaccination_date": f"{d}"}
