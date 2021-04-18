@@ -77,9 +77,9 @@ def registerPost(item:Item = None):
 @app.get("/patient/{id}", status_code = 200)
 def getPost(id:int, respose:Response=Response()):
     
-    if id <1:
+    if id not in app.dicc:
         respose.status_code = 400
-    elif id not in app.dicc:
+    elif id <1:
         respose.status_code = 400
     else:
         return app.dicc[id]
