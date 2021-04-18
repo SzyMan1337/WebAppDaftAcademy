@@ -47,16 +47,22 @@ async def authMet(password:str = None, password_hash:str =None, respose:Response
         if(m == password_hash):
             respose.status_code = 204
 
+
+class Item(BaseModel):
+    name:str
+    surname:str
+
+
 @app.post("/register", status_code=201)
-def registerPost(name:str = None, surname:str = None):
-    if surname != None:
+def registerPost(item:Item = None):
+    if item != None:
         app.i = app.i + 1
-        dlugos = len(name)+len(surname)
+        dlugos = len(item.name)+len(item.surname)
         today = datetime.now()
         day2 = today - timedelta(days=dlugos)
-        p= today.strftime("%Y-%m-%d")
+        p = today.strftime("%Y-%m-%d")
         d=day2.strftime("%Y-%m-%d")
-        x = HelloResp(id=1, name=f"{name}", surname=f"{surname}", register_date= f"{p}", vaccination_date= f"{d}")
+        x = HelloResp(id=1, name=f"{item.name}", surname=f"{item.surname}", register_date= f"{p}", vaccination_date= f"{d}")
         app.dicc[app.i] = x
         return x
        
