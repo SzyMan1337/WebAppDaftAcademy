@@ -33,9 +33,10 @@ def method_post():
 
 @app.get("/auth",status_code=401)
 async def authMet(password:str, password_hash:str, respose:Response):
-    m = hashlib.sha512(str(password).encode('utf-8')).hexdigest()
-    if(m == password_hash):
-        respose.status_code = 204
+    if(password != None && password != "")
+        m = hashlib.sha512(str(password).encode('utf-8')).hexdigest()
+        if(m == password_hash):
+            respose.status_code = 204
 
 @app.post("/register", status_code=201)
 async def registerPost(name:str, surname:str):
