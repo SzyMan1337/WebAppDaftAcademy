@@ -28,10 +28,7 @@ def method_opt():
 @app.post("/method", status_code=201)
 def method_post():
     return {"method": "POST"}
-
-
-
-
+    
 @app.post("/register/{name}/{surname}",status_code=201)
 def registerPost():
     i = i +1
