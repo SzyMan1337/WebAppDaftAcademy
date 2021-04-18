@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from datetime import date
 from datetime import timedelta
+import hashlib
 
 app = FastAPI()
 i = 0
@@ -28,7 +29,14 @@ def method_opt():
 @app.post("/method", status_code=201)
 def method_post():
     return {"method": "POST"}
-    
+
+@app.get("/auth/{password}/{password_hash}",status_code=204)
+def authMet(respose:Response):
+    m = hashlib.sha512(str(password).encode('utf-8')).hexdigest()
+    if(m != password_hash):
+        respose.status_code = status.HTTP_204_NO_CONTENT
+
+
 @app.post("/register/{name}/{surname}",status_code=201)
 def registerPost():
     i = i +1
