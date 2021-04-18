@@ -76,10 +76,9 @@ def registerPost(item:Item = None):
        
 @app.get("/register/{id}", status_code = 200)
 def getPost(id:int, respose:Response=Response()):
-    if id in app.dicc:
-        return app.dicc[id]
-    elif id <1:
+    
+    if id <1:
         respose.status_code = 400
-    else:
-        response.status_code = 404
+    return app.dicc[id]
+
     
