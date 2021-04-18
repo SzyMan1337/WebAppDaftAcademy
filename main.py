@@ -67,7 +67,7 @@ def registerPost(item:Item = None):
                 if charr.isalpha():
                     dlugos = dlugos +1
         today = datetime.now()
-        day2 = today + timedelta(days=dlugos-1)
+        day2 = today + timedelta(days=dlugos)
         p = today.strftime("%Y-%m-%d")
         d=day2.strftime("%Y-%m-%d")
         x = HelloResp(id=1, name=f"{item.name}", surname=f"{item.surname}", register_date= f"{p}", vaccination_date= f"{d}")
