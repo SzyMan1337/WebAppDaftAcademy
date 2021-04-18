@@ -30,14 +30,14 @@ def method_opt():
 def method_post():
     return {"method": "POST"}
 
-@app.get("/auth/{password}/{password_hash}",status_code=201)
+@app.get("/auth",status_code=201)
 def authMet(password:str, password_hash:str, respose:Response):
     m = hashlib.sha512(str(password).encode('utf-8')).hexdigest()
     if(m != password_hash):
         respose.status_code = status.HTTP_404_UNAUTHORIZED
 
 
-@app.post("/register/{name}/{surname}", status_code=201)
+@app.post("/register", status_code=201)
 def registerPost(name:str, surname:str):
     app.i = app.i +1
     dlugos = len(name)+len(surname)
