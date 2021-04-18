@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Response, status
 from datetime import date, datetime
 from datetime import timedelta
+from pydantic import BaseModel
 import hashlib
 
 app = FastAPI()
@@ -34,7 +35,7 @@ def method_post():
 async def authMet(password:str, password_hash:str, respose:Response):
     m = hashlib.sha512(str(password).encode('utf-8')).hexdigest()
     if(m == password_hash):
-        respose.status_code = s
+        respose.status_code = 204
 
 @app.post("/register", status_code=201)
 async def registerPost(name:str, surname:str):
