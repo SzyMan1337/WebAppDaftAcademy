@@ -32,7 +32,7 @@ def method_post():
     return {"method": "POST"}
 
 @app.get("/auth",status_code=401)
-async def authMet(password:str, password_hash:str, respose:Response):
+async def authMet(password:str = None, password_hash:str =None, respose:Response=Response()):
     if password != None and password != "":
         m = hashlib.sha512(str(password).encode('utf-8')).hexdigest()
         if(m == password_hash):
