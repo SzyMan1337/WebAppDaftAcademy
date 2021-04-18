@@ -4,7 +4,7 @@ from datetime import timedelta
 import hashlib
 
 app = FastAPI()
-i = 0
+app.i = 0
 
 @app.get("/")
 def root():
@@ -31,17 +31,17 @@ def method_post():
     return {"method": "POST"}
 
 @app.get("/auth/{password}/{password_hash}",status_code=204)
-def authMet(respose:Response):
+def authMet(password:str, password_hash:str, respose:Response):
     m = hashlib.sha512(str(password).encode('utf-8')).hexdigest()
     if(m != password_hash):
         respose.status_code = status.HTTP_204_NO_CONTENT
 
 
-@app.post("/register/{name}/{surname}",status_code=201)
-def registerPost():
-    i = i +1
-    dlugos = len(name)+len(surname)
-    today = date.today
-    day2 = today - timedelta(days=dlugos); 
-    return {"id": 1, "name": f"{name}", "register_date": f"{today.strftime("%Y-%m-%d")}", "vaccination_date": f"{day2.strftime("%Y-%m-%d")}"}
+# @app.post("/register/{name}/{surname}", status_code=201)
+# def registerPost(name:str, surname:str):
+#     app.i = app.i +1
+#     dlugos = len(name)+len(surname)
+#     today = date.today
+#     day2 = today - timedelta(days=dlugos); 
+#     return {"id": 1, "name": f"{name}", "register_date": f"{today.strftime("%Y-%m-%d")}", "vaccination_date": f"{day2.strftime("%Y-%m-%d")}"}
 
