@@ -34,7 +34,7 @@ def method_post():
 def authMet(password:str, password_hash:str, respose:Response):
     m = hashlib.sha512(str(password).encode('utf-8')).hexdigest()
     if(m != password_hash):
-        respose.status_code = status.HTTP_204_NO_CONTENT
+        respose.status_code = status.HTTP_401_UNAUTHORIZED
 
 
 # @app.post("/register/{name}/{surname}", status_code=201)
