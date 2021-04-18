@@ -74,11 +74,14 @@ def registerPost(item:Item = None):
         app.dicc[app.i] = x
         return x
        
-@app.get("/register/{id}", status_code = 200)
+@app.get("/patient/{id}", status_code = 200)
 def getPost(id:int, respose:Response=Response()):
     
     if id <1:
         respose.status_code = 400
-    return app.dicc[id]
+    elif id not in app.dicc:
+        respose.status_code = 400
+    else:
+        return app.dicc[id]
 
     
