@@ -22,6 +22,6 @@ def method_del():
 def method_opt():
     return {"method": "OPTIONS"}
 
-@app.post("/method")
+@app.post("/method", status_code=201)
 def method_post():
     return {"method": "POST"}
