@@ -69,4 +69,3 @@ def getPost(id:int, respose:Response=Response()):
     else:
         response.status_code = 404
     
-    
