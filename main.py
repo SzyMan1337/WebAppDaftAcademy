@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Response, status
-from datetime import date
+from datetime import date, datetime
 from datetime import timedelta
 import hashlib
 
@@ -30,18 +30,19 @@ def method_opt():
 def method_post():
     return {"method": "POST"}
 
-@app.get("/auth",status_code=201)
+@app.get("/auth",status_code=401)
 async def authMet(password:str, password_hash:str, respose:Response):
     m = hashlib.sha512(str(password).encode('utf-8')).hexdigest()
-    if(m != password_hash):
-        respose.status_code = status.HTTP_404_UNAUTHORIZED
-
+    if(m == password_hash):
+        respose.status_code = s
 
 @app.post("/register", status_code=201)
 async def registerPost(name:str, surname:str):
     app.i = app.i +1
     dlugos = len(name)+len(surname)
-    today = date.today
+    today = datetime.now()
     day2 = today - timedelta(days=dlugos); 
-    return {"id": 1, "name": f"{name}", "register_date": f"{today.strftime("%Y-%m-%d")}", "vaccination_date": f"{day2.strftime("%Y-%m-%d")}"}
+    p= today.strftime("%Y-%m-%d")
+    d=day2.strftime("%Y-%m-%d")
+    return {"id": 1, "name": f"{name}", "register_date": f"{p}", "vaccination_date": f"{d}"}
 
