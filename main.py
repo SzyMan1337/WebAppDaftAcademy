@@ -39,7 +39,7 @@ async def authMet(password:str, password_hash:str, respose:Response):
             respose.status_code = 204
 
 @app.post("/register", status_code=201)
-async def registerPost(name:str, surname:str):
+async def registerPost(name:str = None, surname:str = None):
     app.i = app.i + 1
     dlugos = len(name)+len(surname)
     today = datetime.now()
