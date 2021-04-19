@@ -6,7 +6,9 @@ import hashlib
 
 app = FastAPI()
 app.i = 0
-app.dicc = {}
+
+app.id = 0
+app.patients = []
 
 class HelloResp(BaseModel):
     id:int
@@ -52,36 +54,53 @@ class Item(BaseModel):
     name:str
     surname:str
 
+class Person(BaseModel):
+    name: str
+    surname: str
 
-@app.post("/register", status_code=201)
-def registerPost(item:Item = None):
-    if item != None:
-        app.i = app.i + 1
-        dlugos = 0
-        if(item.name != None):
-            for charr in item.name:
-                if charr.isalpha():
-                    dlugos = dlugos +1
-        if(item.surname != None):
-            for charr in item.surname:
-                if charr.isalpha():
-                    dlugos = dlugos +1
-        today = datetime.now()
-        day2 = today + timedelta(days=dlugos)
-        p = today.strftime("%Y-%m-%d")
-        d=day2.strftime("%Y-%m-%d")
-        x = HelloResp(id=1, name=f"{item.name}", surname=f"{item.surname}", register_date= f"{p}", vaccination_date= f"{d}")
-        app.dicc[app.i] = x
-        return x
-       
-@app.get("/patient/{id}", status_code = 200)
-def getPost(id:int, respose:Response=Response()):
-    
-    if id not in app.dicc:
-        respose.status_code = 400
-    elif id <1:
-        respose.status_code = 400
-    else:
-        return app.dicc[id]
+class MessageResp(BaseModel):
+    message: str
 
+
+class MethodResp(BaseModel):
+    method: str
+
+class Patient(BaseModel):
+    id: int
+    name: str
+    surname: str
+    register_date: str
+    vaccination_date: str
+
+
+def id_inc():
+    app.id += 1
+    return app.id
+
+
+@app.post("/register", response_model=Patient, status_code=status.HTTP_201_CREATED)
+def register(person: Person):
+    plainname = ''.join(filter(str.isalpha, person.name))
+    plainsurname = ''.join(filter(str.isalpha, person.surname))
+    new_patient = Patient(id=id_inc(),
+                   name=person.name,
+                   surname=person.surname,
+                   register_date=date.today().strftime("%Y-%m-%d"),
+                   vaccination_date=(date.today() + timedelta(days=len(plainname) + len(plainsurname))).strftime("%Y-%m-%d"))
+
+    app.patients.append(new_patient)
+    return new_patient
+
+
+@app.get("/patient/{id}", response_model=Patient)
+def patient(id: int, response: Response):
+    if id < 1:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return
+    if id > len(app.patients):
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return
+
+    response.status_code = status.HTTP_200_OK
+    return app.patients[id - 1].dict()
     
