@@ -1,106 +1,176 @@
-from fastapi import FastAPI, Response, status
-from datetime import date, datetime
-from datetime import timedelta
+import secrets
+from datetime import date, datetime, timedelta
+from fastapi import Cookie, Depends, FastAPI, HTTPException, Query, Request, Response, status
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from hashlib import sha256, sha512
 from pydantic import BaseModel
-import hashlib
+from typing import Dict, Optional
+
+class Patient(BaseModel):
+    id: Optional[int] = 1
+    name: str
+    surname: str
+    register_date: Optional[date]
+    vaccination_date: Optional[date]
+
+class Message:
+    def __init__(self, format: Optional[str] = Query("")):
+        self.format = format
+        self.word = ""
+
+    def return_message(self):
+        '''Return message in correct format (json/html/plain)'''
+        if self.format == "json":
+            message = {"message": f"{self.word}!"}
+        elif self.format == "html":
+            message = HTMLResponse(f"<h1>{self.word}!</h1>", status_code=200)
+        else:
+            message = PlainTextResponse(f"{self.word}!", status_code=200)
+        return message
 
 app = FastAPI()
-app.i = 0
+app.counter: int = 1
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.session_cookie_tokens = []
+app.session_tokens = []
+app.storage: Dict[int, Patient] = {}
+templates = Jinja2Templates(directory="templates")
+security = HTTPBasic()
 
-app.id = 0
-app.patients = []
-
-class HelloResp(BaseModel):
-    id:int
-    name:str
-    surname:str
-    register_date:str
-    vaccination_date:str
-
-
+#1.1
 @app.get("/")
 def root():
     return {"message": "Hello world!"}
 
-@app.get("/method")
-def method_get():
-    return {"method": "GET"}
+#1.2
+@app.api_route(path = "/method", methods=["GET", "POST", "DELETE", "PUT", "OPTIONS"], status_code = 200)
+def read_request(request: Request, response: Response):
+    if request.method == "POST":
+        response.status_code = status.HTTP_201_CREATED
+    return {"method": request.method}
 
-@app.put("/method")
-def method_put():
-    return {"method": "PUT"}
+#1.3
+@app.get("/auth")
+def check_pass(response: Response, password: str = Query(""), password_hash: str = Query("")):
+    if password and password_hash:
+        hashed = sha512(password.encode("utf-8")).hexdigest()
+        if password_hash == hashed:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-@app.delete("/method")
-def method_del():
-    return {"method": "DELETE"}
+#1.4
+@app.post("/register")
+async def new_patient(patient: Patient, response: Response):
+    name_letters = "".join([item for item in patient.name if item.isalpha()])
+    surname_letters = "".join([item for item in patient.surname if item.isalpha()])
+    length = len(name_letters) + len(surname_letters)
+    patient.vaccination_date = patient.register_date + timedelta(days=length)
+    patient.id = app.counter
+    app.storage[app.counter] = patient
+    app.counter += 1
+    response.status_code = status.HTTP_201_CREATED
+    return patient
 
-@app.options("/method")
-def method_opt():
-    return {"method": "OPTIONS"}
+#1.5
+@app.get("/patient/{id}")
+def show_patient(id: int, response: Response):
+    if id in app.storage:
+        if id < 1:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+        return app.storage.get(id)
+    raise HTTPException(status_code = status.HTTP_404_NOT_FOUND)
 
-@app.post("/method", status_code=201)
-def method_post():
-    return {"method": "POST"}
+#3.1
+@app.get("/hello", response_class=HTMLResponse)
+def get_hello(request: Request):
+    current_date = datetime.now()
+    str_date = current_date.strftime("%Y-%m-%d")
+    return templates.TemplateResponse("index.html.j2", {
+        "request": request, "message": f"Hello! Today date is {str_date}"})
 
-@app.get("/auth",status_code=401)
-async def authMet(password:str = None, password_hash:str =None, respose:Response=Response()):
-    if password != None and password != "":
-        m = hashlib.sha512(str(password).encode('utf-8')).hexdigest()
-        if(m == password_hash):
-            respose.status_code = 204
+#3.2
+def check_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    '''Helper function for username/password check'''
+    valid_username = secrets.compare_digest(credentials.username, "4dm1n")
+    valid_password = secrets.compare_digest(credentials.password, "NotSoSecurePa$$")
+    if not (valid_password and valid_username):
+        status_code = 401
+    else:
+        status_code = 200
+    return {"status_code": status_code,
+            "valid_username": valid_username,
+            "valid_password": valid_password}
 
+@app.post("/login_session", status_code=201)
+def login_session(response: Response, authorized: dict = Depends(check_credentials)):
+    if authorized["status_code"] == 200:
+        secret_key = secrets.token_hex(16)
+        session_token = sha256(f'{authorized["valid_username"]}{authorized["valid_password"]}{secret_key}'.encode()).hexdigest()
+        if len(app.session_cookie_tokens) >= 3:
+            del app.session_cookie_tokens[0]
+        app.session_cookie_tokens.append(session_token)
+        response.set_cookie(key="session_token", value=session_token)
+    elif authorized["status_code"] == 401:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Basic"})
+    return {"message": "Session established"}
 
-class Item(BaseModel):
-    name:str
-    surname:str
+@app.post("/login_token", status_code=201)
+def login_token(authorized: dict = Depends(check_credentials)):
+    if authorized["status_code"] == 200:
+        secret_key = secrets.token_hex(16)
+        token_value = sha256(f'{authorized["valid_username"]}{authorized["valid_password"]}{secret_key}'.encode()).hexdigest()
+        if len(app.session_tokens) >= 3:
+            del app.session_tokens[0]
+        app.session_tokens.append(token_value)
+    elif authorized["status_code"] == 401:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Basic"})
+    return {"token": token_value}
 
-class Person(BaseModel):
-    name: str
-    surname: str
+#3.3
+@app.get("/welcome_session")
+def welcome_session(session_token: str = Cookie(None), is_format: Message = Depends(Message)):
+    if not session_token or session_token not in app.session_cookie_tokens:
+        raise HTTPException(status_code=401, detail="Unathorised")
+    else:
+        is_format.word = "Welcome"
+        return is_format.return_message()
 
-class MessageResp(BaseModel):
-    message: str
+@app.get("/welcome_token")
+def welcome_token(token: Optional[str] = Query(None), is_format: Message = Depends(Message)):
+    if not token or token not in app.session_tokens:
+        raise HTTPException(status_code=401, detail="Unathorised")
+    else:
+        is_format.word = "Welcome"
+        return is_format.return_message()
 
+#3.4
+@app.delete("/logout_session")
+def logout_session(session_token: str = Cookie(None), format: str = Query("")):
+    if not session_token or session_token not in app.session_cookie_tokens:
+        raise HTTPException(status_code=401, detail="Unathorised")
+    else:
+        app.session_cookie_tokens.remove(session_token)
+        url = f"/logged_out?format={format}"
+        return RedirectResponse(url=url, status_code=303)
 
-class MethodResp(BaseModel):
-    method: str
+@app.delete("/logout_token")
+def logout_token(token: Optional[str] = Query(None), format: str = Query("")):
+    if not token or token not in app.session_tokens:
+        raise HTTPException(status_code=401, detail="Unathorised")
+    else:
+        app.session_tokens.remove(token)
+        url = f"/logged_out?format={format}"
+        return RedirectResponse(url=url, status_code=303)
 
-class Patient(BaseModel):
-    id: int
-    name: str
-    surname: str
-    register_date: str
-    vaccination_date: str
-
-
-def id_inc():
-    app.id += 1
-    return app.id
-
-
-@app.post("/register", response_model=Patient, status_code=status.HTTP_201_CREATED)
-def register(person: Person):
-    plainname = ''.join(filter(str.isalpha, person.name))
-    plainsurname = ''.join(filter(str.isalpha, person.surname))
-    new_patient = Patient(id=id_inc(),
-                   name=person.name,
-                   surname=person.surname,
-                   register_date=date.today().strftime("%Y-%m-%d"),
-                   vaccination_date=(date.today() + timedelta(days=len(plainname) + len(plainsurname))).strftime("%Y-%m-%d"))
-
-    app.patients.append(new_patient)
-    return new_patient
-
-
-@app.get("/patient/{id}", response_model=Patient)
-def patient(id: int, response: Response):
-    if id < 1:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return
-    if id > len(app.patients):
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return
-
-    response.status_code = status.HTTP_200_OK
-    return app.patients[id - 1].dict()
+@app.get("/logged_out")
+def logged_out(is_format: Message = Depends(Message)):
+    is_format.word = "Logged out"
+    return is_format.return_message()
     
