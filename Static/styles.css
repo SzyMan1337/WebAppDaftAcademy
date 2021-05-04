@@ -1,0 +1,19 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #FCD612;
+    font-family: "Arial", sans-serif;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+h1 {
+    border: 5px solid white;
+    text-align: center;
+    padding: 1.2em;
+}
